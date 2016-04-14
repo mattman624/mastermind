@@ -9,37 +9,55 @@ require "./substrings.rb"
 class Game
 
   def initialize
+    @guesses = 0
+    @max_guesses = 10
     start_game
   end
 
   def start_game
-    game_over = false
+    @game_over = false
 
     puts "What is your name?"
-    guesser = Guesser.new(name)
-    master = Master.new("Computer")
+    name = gets.chomp
+    @guesser = Guesser.new(name)
+    @master = Master.new("Computer")
+    @master.create_code
 
+    until @game_over || @guesses >= @max_guesses
+      
+      @game_over = check_win?( guess )
 
+      @guesses += 1
+    end
+
+    puts @game_over ? "Congrats #{@guesser.name}, you guessed correctly" : "Congrats #{@master.name}!"
+  end
+
+  def check_win?(results)
+    indicator_frequencies = substrings(results.values.join(" "), ["black"])
+    if indicator_frequencies["black"] == 4
+      return true
+    end
+    false
   end
 
 
-
   def get_input
-    puts "Please enter four valid colors"
+    puts "Please enter four valid colors (red, green, black, blue, yellow)"
     user_input = gets.chomp.split(" ")
   end
 
   def guess
     user_input = get_input
     user_guess = Code.new(user_input[0], user_input[1], user_input[2], user_input[3])
-    master.code.compare(user_guess)
+    @master.code.compare(user_guess)
   end
 
 
   class Player
     attr_accessor :name
     def initialize(name)
-      @name = name      
+      @name = name.capitalize      
     end
   end
 
@@ -69,17 +87,29 @@ class Game
     end
 
     def compare(other_code)
-      results = Hash.new
-      results = set_whites(other_code, results)
+      results = Hash.new("")      
       results = set_blacks(other_code, results)
+      results = set_whites(other_code, results)
       show_comparison(results)
       results
     end
 
     def set_whites(other_code, results)
       #already made method counts frequencies of words in one string against an array, returns hash
-      similarities = substrings(other_code.code.values.join(" "), @code.values)
-      other_code.code.each do |key, value|
+      #Need to pull the blacks out first 
+
+      remaining_results = other_code.code.reject do |key, value|
+        results.has_key?(key)
+      end
+
+      remaining_master = @code.select do |key, value|
+        remaining_results.has_key?(key)
+      end
+
+      similarities = substrings(remaining_results.values.join(" "), remaining_master.values)
+
+      remaining_results.each do |key, value|
+
         if similarities[value] > 0
           results[key] = "white"
           similarities[value] -=1
