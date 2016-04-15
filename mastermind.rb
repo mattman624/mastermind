@@ -19,18 +19,30 @@ class Game
 
     puts "What is your name?"
     name = gets.chomp
-    @guesser = Guesser.new(name)
-    @master = Master.new("Computer")
-    @master.create_code
+    puts "Would you like to guess or set the code? (guess/set)"
+    user_input = gets.chomp
 
-    until @game_over || @guesses >= @max_guesses
-      
-      @game_over = check_win?( guess )
+    if user_input == "guess"
+      @guesser = Guesser.new(name)
+      @master = Master.new("Computer")
+      @master.create_code
 
-      @guesses += 1
+      until @game_over || @guesses >= @max_guesses
+        
+        @game_over = check_win?( guess )
+
+        @guesses += 1
+      end
+
+      puts @game_over ? "Congrats #{@guesser.name}, you guessed correctly" : "Congrats #{@master.name}!"
+
+    elsif user_input == "set"
+      @guesser = Guesser.new("computer")
+      @master = Master.new(name)
+      @master.create_code
+    else
+      puts "bad input"
     end
-
-    puts @game_over ? "Congrats #{@guesser.name}, you guessed correctly" : "Congrats #{@master.name}!"
   end
 
   def check_win?(results)
