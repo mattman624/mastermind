@@ -9,40 +9,47 @@ require "./substrings.rb"
 class Game
 
   def initialize
-    @guesses = 0
+    
     @max_guesses = 10
     start_game
   end
 
   def start_game
     @game_over = false
-
+    @guesses = 0
     puts "What is your name?"
     name = gets.chomp
     puts "Would you like to guess or set the code? (guess/set)"
     user_input = gets.chomp
 
+    #get this to be player/computer agnostic
     if user_input == "guess"
+
       @guesser = Guesser.new(name)
       @master = Master.new("Computer")
-      @master.create_code
-
-      until @game_over || @guesses >= @max_guesses
-        
-        @game_over = check_win?( guess )
-
-        @guesses += 1
-      end
-
-      puts @game_over ? "Congrats #{@guesser.name}, you guessed correctly" : "Congrats #{@master.name}!"
-
     elsif user_input == "set"
+
       @guesser = Guesser.new("computer")
       @master = Master.new(name)
-      @master.create_code
     else
       puts "bad input"
+      return
     end
+
+    @master.create_code
+
+    until @game_over || @guesses >= @max_guesses
+
+      
+      guess = @guesser.guess
+
+      @game_over = check_win?( @master.compare(guess) )
+
+      @guesses += 1
+    end
+    puts @game_over ? "Congrats #{@guesser.name}, you guessed correctly" : "Congrats #{@master.name}!"
+    
+
   end
 
   def check_win?(results)
@@ -53,24 +60,29 @@ class Game
     false
   end
 
-
-  def get_input
-    puts "Please enter four valid colors (red, green, black, blue, yellow)"
-    user_input = gets.chomp.split(" ")
-  end
-
-  def guess
-    user_input = get_input
-    user_guess = Code.new(user_input[0], user_input[1], user_input[2], user_input[3])
-    @master.code.compare(user_guess)
-  end
-
-
   class Player
     attr_accessor :name
     def initialize(name)
       @name = name.capitalize      
     end
+
+    def guess
+
+      unless @name == "Computer"
+        user_input = get_input
+        user_guess = Code.new( user_input[0], user_input[1], user_input[2], user_input[3] )   
+      else
+        user_guess = Code.random
+        sleep 1
+      end 
+      user_guess
+    end
+
+    def get_input
+      puts "Please enter four valid colors (red, green, black, blue, yellow)"
+      user_input = gets.chomp.split(" ")
+    end
+
   end
 
   class Guesser < Player
@@ -81,21 +93,30 @@ class Game
     attr_accessor :code
 
     def create_code
-      colors = %w(red green black blue yellow)
-      @code = Code.new(colors.sample, colors.sample, colors.sample, colors.sample)
+      @code = guess
     end
+
+    def compare(other_code)
+      @code.compare(other_code) 
+    end       
   end
 
   class Code
     #attr_accessor :one, :two, :three, :four 
-    attr_accessor :code    
+    attr_accessor :code 
+    include Enumerable  
 
-    def initialize(one, two, three, four)
+    def initialize(one = "", two = "", three = "", four = "" )
       @code = Hash.new
       @code[:one] = one
       @code[:two] = two
       @code[:three] = three
       @code[:four] = four
+    end
+
+    def self.random
+      colors = %w(red green black blue yellow)
+      new_code = Code.new(colors.sample, colors.sample, colors.sample, colors.sample)
     end
 
     def compare(other_code)
@@ -144,6 +165,10 @@ class Game
     def show_comparison(results)
       puts results.keys.join(" ")
       puts results.values.join(" ")
+    end
+
+    def each
+      @code.each
     end
   end
 end

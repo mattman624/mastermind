@@ -45,7 +45,7 @@ describe "Mastermind" do
   describe "player" do
     it 'takes and gives a name' do
       player = Game::Player.new("matt")
-      expect(player.name).to eq("matt")      
+      expect(player.name).to eq("Matt")      
     end    
   end
 
