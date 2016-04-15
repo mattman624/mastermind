@@ -27,10 +27,12 @@ class Game
 
       @guesser = Guesser.new(name)
       @master = Master.new("Computer")
+
     elsif user_input == "set"
 
       @guesser = Guesser.new("computer")
       @master = Master.new(name)
+
     else
       puts "bad input"
       return
@@ -43,7 +45,9 @@ class Game
       
       guess = @guesser.guess
 
-      @game_over = check_win?( @master.compare(guess) )
+      guess_compare_results = @master.compare(guess)
+      @game_over = check_win?( guess_compare_results )
+      @guesser.last_guess_results = guess_compare_results
 
       @guesses += 1
     end
@@ -86,7 +90,28 @@ class Game
   end
 
   class Guesser < Player
+    attr_accessor :last_guess_results, :last_guess
 
+    def guess
+      if @name != "Computer" || @last_guess_results == nil
+        @last_guess = super
+      else
+        colors = %w(red green black blue yellow)
+        new_guess = Hash.new(nil)
+        @last_guess_results.each do |key, value|
+          if value == "black"
+            new_guess[key] = @last_guess.code[key]
+          end
+        end
+        new_guess[:one] ||= colors.sample
+        new_guess[:two] ||= colors.sample
+        new_guess[:three] ||= colors.sample
+        new_guess[:four] ||= colors.sample
+        @last_guess = Code.new(new_guess[:one], new_guess[:two], new_guess[:three], new_guess[:four])
+        puts new_guess
+      end
+      @last_guess
+    end
   end
 
   class Master < Player
@@ -169,6 +194,10 @@ class Game
 
     def each
       @code.each
+    end
+
+    def each_key 
+      @code.each_key
     end
   end
 end
